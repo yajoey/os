@@ -1,0 +1,73 @@
+# custom-silverblue.yaml
+name: custom-silverblue
+description: Minimal Fedora Silverblue image without default GNOME applications
+version: 39
+
+base-image: fedora/fedora-silverblue
+
+# Additional repositories
+repos:
+  - rpmfusion-free
+  - rpmfusion-nonfree
+
+# Packages to remove (GNOME applications and unnecessary components)
+remove-packages:
+  # Default GNOME Applications
+  - gnome-boxes
+  - gnome-calculator
+  - gnome-calendar
+  - gnome-characters
+  - gnome-clocks
+  - gnome-connections
+  - gnome-contacts
+  - gnome-font-viewer
+  - gnome-logs
+  - gnome-maps
+  - gnome-photos
+  - gnome-remote-desktop
+  - gnome-weather
+  - totem                    # GNOME Videos
+  - evince                   # Document viewer
+  - simple-scan
+  - cheese                   # Webcam application
+  - tour
+  - yelp                     # GNOME Help
+
+  # GNOME Games
+  - gnome-mines
+  - gnome-sudoku
+
+  # Other default applications
+  - firefox
+  - libreoffice-*           # LibreOffice suite
+  - rhythmbox
+  - baobab                  # Disk usage analyzer
+
+# Keep these essential GNOME components
+packages:
+  # Essential GNOME Components (explicitly included to ensure they're not removed)
+  - gnome-shell
+  - gnome-terminal
+  - gnome-control-center
+  - gnome-system-monitor
+  - gdm
+  - nautilus                # File manager
+
+  # System utilities
+  - neovim
+  - htop
+  - wget
+  - curl
+
+# Post-installation scripts
+scripts:
+  # Enable RPM Fusion repositories
+  - |
+    #!/bin/bash
+    dnf install -y https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm
+    dnf install -y https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+  # Configure flatpak repositories for alternative applications
+  - |
+    #!/bin/bash
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo

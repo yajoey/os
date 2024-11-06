@@ -1,0 +1,56 @@
+# .github/workflows/build-silverblue.yml
+name: Build Custom Silverblue
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'config/custom-silverblue.yaml'
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:39
+      options: --privileged
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        dnf update -y
+        dnf install -y rpm-ostree rpm-ostree-compose git wget curl
+
+    - name: Build Silverblue image
+      run: |
+        mkdir -p output
+        rpm-ostree compose image config/custom-silverblue.yaml -o output/
+        # Compress the output
+        cd output
+        tar czf silverblue-custom.tar.gz *.iso
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: silverblue-image
+        path: output/silverblue-custom.tar.gz
+        retention-days: 5
+
+    - name: Create Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: output/silverblue-custom.tar.gz
+        tag_name: v${{ github.run_number }}
+        name: Custom Silverblue Build ${{ github.run_number }}
+        body: |
+          Automated build of custom Silverblue image
+          Commit: ${{ github.sha }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
