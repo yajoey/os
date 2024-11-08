@@ -23,15 +23,22 @@ jobs:
     - name: Install dependencies
       run: |
         dnf update -y
-        dnf install -y rpm-ostree rpm-ostree-compose git wget curl
+        dnf install -y rpm-ostree git wget curl
 
     - name: Build Silverblue image
       run: |
         mkdir -p output
-        rpm-ostree compose image config/custom-silverblue.yaml -o output/
+        # Use rpm-ostree compose tree instead of image
+        rpm-ostree compose tree --repo=repo config/custom-silverblue.yaml
+        ostree --repo=repo summary -u
+        
+        # Create an installable commit
+        mkdir -p output/silverblue
+        ostree --repo=repo export custom-silverblue output/silverblue
+        
         # Compress the output
         cd output
-        tar czf silverblue-custom.tar.gz *.iso
+        tar czf silverblue-custom.tar.gz silverblue/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
